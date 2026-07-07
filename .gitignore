@@ -1,0 +1,33 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+
+# --- Virtual environment ---
+venv/
+.venv/
+env/
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Data (tracked via DVC going forward, structure kept via .gitkeep) ---
+data/raw/*
+data/processed/*
+data/logs/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/logs/.gitkeep
+
+# --- OS / editor ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

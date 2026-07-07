@@ -1,0 +1,84 @@
+import sys
+from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.table import Table
+
+from src.preprocessor import cleaner
+from src.utils.config import settings
+from src.utils.logger_manager import logger
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+app = typer.Typer(
+    name="ai-voice-pipeline",
+    help="RVC v2 tabanlı AI Voice Engineering Pipeline CLI.",
+    add_completion=False,
+)
+
+console = Console()
+
+
+@app.callback()
+def main() -> None:
+    """RVC v2 tabanlı AI Voice Engineering Pipeline — modüler komut satırı arayüzü."""
+
+
+@app.command()
+def preprocess(
+    raw_dir: Optional[Path] = typer.Option(
+        None,
+        "--raw-dir",
+        "-r",
+        help="Ham ses dosyalarının bulunduğu dizin. Belirtilmezse PipelineSettings.RAW_DATA_DIR kullanılır.",
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None,
+        "--output-dir",
+        "-o",
+        help="İşlenmiş dosyaların kaydedileceği dizin. Belirtilmezse PipelineSettings.PROCESSED_DATA_DIR kullanılır.",
+    ),
+) -> None:
+    """Ham sesleri temizler, normalize eder, parçalar ve işlenmiş dizine kaydeder."""
+    effective_raw_dir = raw_dir or settings.RAW_DATA_DIR
+    effective_output_dir = output_dir or settings.PROCESSED_DATA_DIR
+
+    logger.info("=" * 60)
+    logger.info("preprocess komutu başlatıldı")
+    logger.info(f"Raw dir: {effective_raw_dir} | Output dir: {effective_output_dir}")
+
+    console.print(f"[bold cyan]▶ Ön işleme başlatılıyor...[/bold cyan] ({effective_raw_dir} → {effective_output_dir})")
+
+    try:
+        stats = cleaner.run(raw_dir=effective_raw_dir, processed_dir=effective_output_dir)
+    except Exception as e:
+        logger.exception(f"preprocess komutu beklenmeyen bir hata ile sonlandı: {e}")
+        console.print(f"[bold red]✗ Ön işleme başarısız oldu:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    logger.info("preprocess komutu tamamlandı")
+
+    table = Table(title="Ön İşleme Sonucu", show_header=True, header_style="bold cyan")
+    table.add_column("Metrik")
+    table.add_column("Değer", justify="right")
+    table.add_row("Taranan dosya", str(stats.total_files))
+    table.add_row("Oluşturulan parça", str(stats.total_chunks))
+    table.add_row("Başarısız dosya", str(stats.failed_files))
+    table.add_row("Örnekleme hızı", f"{settings.SAMPLE_RATE} Hz")
+    table.add_row("Maks. parça süresi", f"{settings.MAX_CHUNK_DURATION_SEC} sn")
+
+    console.print(table)
+
+    if stats.total_files == 0:
+        console.print(f"[bold yellow]⚠ '{effective_raw_dir}' içinde işlenecek dosya bulunamadı.[/bold yellow]")
+    elif stats.failed_files > 0:
+        console.print(f"[bold yellow]⚠ Tamamlandı, ancak {stats.failed_files} dosya başarısız oldu.[/bold yellow]")
+    else:
+        console.print("[bold green]✓ Ön işleme başarıyla tamamlandı.[/bold green]")
+
+
+if __name__ == "__main__":
+    app()

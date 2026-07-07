@@ -1,0 +1,7 @@
+typer
+pydantic
+pydantic-settings
+loguru
+pydub
+librosa
+resemblyzer
