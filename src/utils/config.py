@@ -15,6 +15,7 @@ class PipelineSettings(BaseSettings):
 
     RAW_DATA_DIR: Path = Path("data/raw")
     PROCESSED_DATA_DIR: Path = Path("data/processed")
+    FEATURES_DATA_DIR: Path = Path("data/features")
 
     SAMPLE_RATE: int = 44100
     MAX_CHUNK_DURATION_SEC: int = 10

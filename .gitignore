@@ -20,9 +20,11 @@ env/
 # --- Data (tracked via DVC going forward, structure kept via .gitkeep) ---
 data/raw/*
 data/processed/*
+data/features/*
 data/logs/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/features/.gitkeep
 !data/logs/.gitkeep
 
 # --- OS / editor ---

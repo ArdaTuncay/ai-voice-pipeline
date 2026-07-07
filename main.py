@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from src.features import extractor
 from src.preprocessor import cleaner
 from src.utils.config import settings
 from src.utils.logger_manager import logger
@@ -78,6 +79,63 @@ def preprocess(
         console.print(f"[bold yellow]⚠ Tamamlandı, ancak {stats.failed_files} dosya başarısız oldu.[/bold yellow]")
     else:
         console.print("[bold green]✓ Ön işleme başarıyla tamamlandı.[/bold green]")
+
+
+@app.command(name="feature-extract")
+def feature_extract(
+    processed_dir: Optional[Path] = typer.Option(
+        None,
+        "--processed-dir",
+        "-p",
+        help="İşlenmiş .wav dosyalarının bulunduğu dizin. Belirtilmezse PipelineSettings.PROCESSED_DATA_DIR kullanılır.",
+    ),
+    features_dir: Optional[Path] = typer.Option(
+        None,
+        "--features-dir",
+        "-f",
+        help="Embedding (.npy) dosyalarının kaydedileceği dizin. Belirtilmezse PipelineSettings.FEATURES_DATA_DIR kullanılır.",
+    ),
+) -> None:
+    """İşlenmiş ses parçalarından resemblyzer ile speaker embedding (d-vector) çıkarır."""
+    effective_processed_dir = processed_dir or settings.PROCESSED_DATA_DIR
+    effective_features_dir = features_dir or settings.FEATURES_DATA_DIR
+
+    logger.info("=" * 60)
+    logger.info("feature-extract komutu başlatıldı")
+    logger.info(f"Processed dir: {effective_processed_dir} | Features dir: {effective_features_dir}")
+
+    console.print(
+        f"[bold cyan]▶ Özellik çıkarımı başlatılıyor...[/bold cyan] "
+        f"({effective_processed_dir} → {effective_features_dir})"
+    )
+
+    try:
+        stats = extractor.run(processed_dir=effective_processed_dir, features_dir=effective_features_dir)
+    except Exception as e:
+        logger.exception(f"feature-extract komutu beklenmeyen bir hata ile sonlandı: {e}")
+        console.print(f"[bold red]✗ Özellik çıkarımı başarısız oldu:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    logger.info("feature-extract komutu tamamlandı")
+
+    table = Table(title="Özellik Çıkarımı Sonucu", show_header=True, header_style="bold cyan")
+    table.add_column("Metrik")
+    table.add_column("Değer", justify="right")
+    table.add_row("Taranan dosya", str(stats.total_files))
+    table.add_row("Başarılı embedding", str(stats.succeeded))
+    table.add_row("Başarısız dosya", str(stats.failed))
+    table.add_row("Süre", f"{stats.duration_sec:.2f} sn")
+
+    console.print(table)
+
+    if stats.total_files == 0:
+        console.print(
+            f"[bold yellow]⚠ '{effective_processed_dir}' içinde işlenecek .wav dosyası bulunamadı.[/bold yellow]"
+        )
+    elif stats.failed > 0:
+        console.print(f"[bold yellow]⚠ Tamamlandı, ancak {stats.failed} dosya başarısız oldu.[/bold yellow]")
+    else:
+        console.print("[bold green]✓ Özellik çıkarımı başarıyla tamamlandı.[/bold green]")
 
 
 if __name__ == "__main__":
