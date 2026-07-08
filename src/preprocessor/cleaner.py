@@ -6,7 +6,10 @@ from pydub.exceptions import CouldntDecodeError
 from pydub.silence import split_on_silence
 
 from src.utils.config import settings
+from src.utils.ffmpeg_setup import ensure_ffmpeg_on_path
 from src.utils.logger_manager import logger
+
+ensure_ffmpeg_on_path()
 
 SUPPORTED_EXTENSIONS = {".wav", ".mp3", ".flac", ".m4a", ".ogg"}
 TARGET_DBFS = -20.0

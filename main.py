@@ -230,6 +230,8 @@ def inference(
     table.add_row("Çıktı konumu", str(result.output_path))
     table.add_row("Ses süresi", f"{result.duration_sec:.2f} sn")
     table.add_row("İşlem süresi", f"{result.processing_time_sec:.2f} sn")
+    table.add_row("Pitch kayması", f"{result.pitch_shift_semitones:+.2f} yarım ton")
+    table.add_row("Formant oranı", f"x{result.formant_shift_ratio:.3f}")
 
     console.print(table)
     console.print("[bold green]✓ Ses dönüşümü başarıyla tamamlandı.[/bold green]")

@@ -20,11 +20,12 @@ env/
 # --- Data not yet under DVC (structure kept via .gitkeep) ---
 data/raw/*
 data/logs/*
-data/output/*
 !data/raw/.gitkeep
 !data/logs/.gitkeep
-!data/output/.gitkeep
-# data/processed/ and data/features/ are DVC-tracked (see data/.gitignore, *.dvc files)
+# data/processed/, data/features/ and data/output/ are DVC-tracked (see data/.gitignore, *.dvc files)
+
+# --- Stray personal audio dropped at repo root (not part of tracked data pipeline) ---
+/farkli_metin_raw.m4a
 
 # --- W&B run artifacts ---
 wandb/
