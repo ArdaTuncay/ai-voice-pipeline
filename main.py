@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.features import extractor
+from src.models import train as train_module
 from src.preprocessor import cleaner
 from src.utils.config import settings
 from src.utils.logger_manager import logger
@@ -136,6 +137,55 @@ def feature_extract(
         console.print(f"[bold yellow]⚠ Tamamlandı, ancak {stats.failed} dosya başarısız oldu.[/bold yellow]")
     else:
         console.print("[bold green]✓ Özellik çıkarımı başarıyla tamamlandı.[/bold green]")
+
+
+@app.command()
+def train(
+    features_dir: Optional[Path] = typer.Option(
+        None,
+        "--features-dir",
+        "-f",
+        help="Embedding (.npy) dosyalarının bulunduğu dizin. Belirtilmezse PipelineSettings.FEATURES_DATA_DIR kullanılır.",
+    ),
+) -> None:
+    """Embedding'ler üzerinde eğitim döngüsünü çalıştırır ve metrikleri W&B'ye loglar."""
+    effective_features_dir = features_dir or settings.FEATURES_DATA_DIR
+
+    logger.info("=" * 60)
+    logger.info("train komutu başlatıldı")
+    logger.info(f"Features dir: {effective_features_dir}")
+
+    console.print(f"[bold cyan]▶ Eğitim başlatılıyor...[/bold cyan] ({effective_features_dir})")
+
+    try:
+        stats = train_module.run(features_dir=effective_features_dir)
+    except Exception as e:
+        logger.exception(f"train komutu beklenmeyen bir hata ile sonlandı: {e}")
+        console.print(f"[bold red]✗ Eğitim başarısız oldu:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    logger.info("train komutu tamamlandı")
+
+    table = Table(title="Eğitim Özeti", show_header=True, header_style="bold cyan")
+    table.add_column("Metrik")
+    table.add_column("Değer", justify="right")
+    table.add_row("Kullanılan embedding", str(stats.total_embeddings))
+    table.add_row("Tamamlanan epoch", str(stats.epochs_completed))
+    table.add_row("Final loss", f"{stats.final_loss:.4f}")
+    table.add_row("Final accuracy", f"{stats.final_accuracy:.4f}")
+    table.add_row("Batch size", str(settings.BATCH_SIZE))
+    table.add_row("Learning rate", str(settings.LEARNING_RATE))
+    table.add_row("W&B projesi", settings.WANDB_PROJECT)
+    table.add_row("Süre", f"{stats.duration_sec:.2f} sn")
+
+    console.print(table)
+
+    if stats.total_embeddings == 0:
+        console.print(
+            f"[bold yellow]⚠ '{effective_features_dir}' içinde işlenecek .npy dosyası bulunamadı.[/bold yellow]"
+        )
+    else:
+        console.print("[bold green]✓ Eğitim başarıyla tamamlandı.[/bold green]")
 
 
 if __name__ == "__main__":

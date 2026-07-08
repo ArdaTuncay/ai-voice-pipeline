@@ -22,5 +22,10 @@ class PipelineSettings(BaseSettings):
     SILENCE_THRESH_DB: int = -40
     MIN_SILENCE_LEN_MS: int = 500
 
+    WANDB_PROJECT: str = "ai-voice-pipeline"
+    TRAIN_EPOCHS: int = 100
+    BATCH_SIZE: int = 16
+    LEARNING_RATE: float = 0.0001
+
 
 settings = PipelineSettings()

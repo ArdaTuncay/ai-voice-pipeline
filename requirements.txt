@@ -6,3 +6,4 @@ pydub
 librosa
 resemblyzer
 dvc
+wandb

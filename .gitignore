@@ -24,6 +24,9 @@ data/logs/*
 !data/logs/.gitkeep
 # data/processed/ and data/features/ are DVC-tracked (see data/.gitignore, *.dvc files)
 
+# --- W&B run artifacts ---
+wandb/
+
 # --- OS / editor ---
 .vscode/
 .idea/
