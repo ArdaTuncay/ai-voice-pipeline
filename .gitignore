@@ -20,8 +20,10 @@ env/
 # --- Data not yet under DVC (structure kept via .gitkeep) ---
 data/raw/*
 data/logs/*
+data/output/*
 !data/raw/.gitkeep
 !data/logs/.gitkeep
+!data/output/.gitkeep
 # data/processed/ and data/features/ are DVC-tracked (see data/.gitignore, *.dvc files)
 
 # --- W&B run artifacts ---

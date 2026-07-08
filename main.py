@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.features import extractor
+from src.models import inference as inference_module
 from src.models import train as train_module
 from src.preprocessor import cleaner
 from src.utils.config import settings
@@ -186,6 +187,52 @@ def train(
         )
     else:
         console.print("[bold green]✓ Eğitim başarıyla tamamlandı.[/bold green]")
+
+
+@app.command()
+def inference(
+    source_audio: Path = typer.Option(
+        ...,
+        "--source-audio",
+        "-s",
+        help="Dönüştürülecek kaynak ses dosyası.",
+    ),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output-path",
+        "-o",
+        help="Dönüştürülmüş sesin kaydedileceği dosya yolu. Belirtilmezse PipelineSettings.OUTPUT_DATA_DIR altına otomatik isimlendirilir.",
+    ),
+) -> None:
+    """Kaynak sesi, çıkarılan hedef konuşmacı tınısına dönüştürüp data/output/ altına kaydeder."""
+    logger.info("=" * 60)
+    logger.info("inference komutu başlatıldı")
+    logger.info(f"Source audio: {source_audio} | Output path: {output_path or '(otomatik)'}")
+
+    console.print(f"[bold cyan]▶ Ses dönüşümü başlatılıyor...[/bold cyan] ({source_audio})")
+
+    try:
+        result = inference_module.run(source_audio=source_audio, output_path=output_path)
+    except Exception as e:
+        logger.exception(f"inference komutu beklenmeyen bir hata ile sonlandı: {e}")
+        console.print(f"[bold red]✗ Ses dönüşümü başarısız oldu:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    logger.info("inference komutu tamamlandı")
+
+    if not result.success:
+        console.print("[bold red]✗ Ses dönüşümü başarısız oldu.[/bold red] Ayrıntılar için loglara bakın.")
+        raise typer.Exit(code=1)
+
+    table = Table(title="Ses Dönüşümü Sonucu", show_header=True, header_style="bold cyan")
+    table.add_column("Metrik")
+    table.add_column("Değer", justify="right")
+    table.add_row("Çıktı konumu", str(result.output_path))
+    table.add_row("Ses süresi", f"{result.duration_sec:.2f} sn")
+    table.add_row("İşlem süresi", f"{result.processing_time_sec:.2f} sn")
+
+    console.print(table)
+    console.print("[bold green]✓ Ses dönüşümü başarıyla tamamlandı.[/bold green]")
 
 
 if __name__ == "__main__":
