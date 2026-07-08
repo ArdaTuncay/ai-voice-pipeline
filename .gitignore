@@ -17,15 +17,12 @@ env/
 .env.*
 !.env.example
 
-# --- Data (tracked via DVC going forward, structure kept via .gitkeep) ---
+# --- Data not yet under DVC (structure kept via .gitkeep) ---
 data/raw/*
-data/processed/*
-data/features/*
 data/logs/*
 !data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/features/.gitkeep
 !data/logs/.gitkeep
+# data/processed/ and data/features/ are DVC-tracked (see data/.gitignore, *.dvc files)
 
 # --- OS / editor ---
 .vscode/
